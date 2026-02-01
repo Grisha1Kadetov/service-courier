@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:15            # Официальный образ PostgreSQL
+    container_name: service-courier-db   # Имя контейнера
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}          # Имя пользователя БД (берем из .env)
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}  # Пароль (берем из .env)
+      POSTGRES_DB: ${POSTGRES_DB}              # База данных, создаваемая при запуске (берем из .env)
+    networks:
+      - infrastructure_default
+    volumes:
+      - pgdata:/var/lib/postgresql/data        # Хранилище данных
+    ports:
+      - "${POSTGRES_PORT}:5432"                # Проброс порта: хост:контейнер (хост берем из .env)
+  
+  service-courier:
+    build: .
+    ports:
+      - "${COURIER_PORT}:${PORT}"
+      - "127.0.0.1:6060:6060"
+    env_file:
+      - .env
+    environment:
+      - PPROF=1
+      - IN_DOCKER=1
+    networks:
+      - infrastructure_default
+      - monitoring
+  
+  grafana:
+    image: grafana/grafana
+    ports: ["3000:3000"]
+    volumes:
+      - "grafana-data:/var/lib/grafana"
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus
+    ports: ["9090:9090"]
+    volumes:
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "prometheus-data:/prometheus"
+    networks:
+      - monitoring
+  
+volumes:
+  prometheus-data:
+  pgdata:
+  grafana-data:
+
+networks:
+  monitoring:
+    driver: bridge
+  infrastructure_default:
+    external: true
