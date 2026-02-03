@@ -95,3 +95,7 @@
 - GitHub Actions
 - golangci-lint
 - pprof
+
+---
+
+![Сертификат](docs/Сертификат.png)
